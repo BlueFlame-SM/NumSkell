@@ -52,23 +52,36 @@ extra-doc-files:    CHANGELOG.md
 -- extra-source-files:
 
 common warnings
-    ghc-options: -Wall
+    ghc-options: -Wall:
+
 
 library
     -- Import common warning flags.
     import:           warnings
 
     -- Modules exported by the library.
-    exposed-modules:  MyLib
+    exposed-modules:  Data.Array
 
     -- Modules included in this library but not exported.
     -- other-modules:
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
+    default-extensions:
+        DataKinds,
+        GADTs,
+        KindSignatures,
+        RankNTypes,
+        ScopedTypeVariables,
+        StandaloneDeriving,
+        TypeOperators,
+        TypeApplications
 
     -- Other library packages from which modules are imported.
-    build-depends:    base ^>=4.17.2.1
+    build-depends:
+        base ^>=4.17.2.1,
+        vector
+
 
     -- Directories containing source files.
     hs-source-dirs:   src
