@@ -1,6 +1,6 @@
 module Data.Array where
 
-import Data.Vector (Vector)
+import Data.Vector (Vector, (!))
 import qualified Data.Vector as V
 
 import Data.Kind
@@ -37,12 +37,18 @@ instance KnownNat n => Applicative (Array n) where
   pure a = Array (V.replicate (fromIntegral (natVal (Proxy @n))) a)
   Array f <*> Array x = Array (V.zipWith ($) f x)
 
-instance KnownNat n => Monad (Array n) where
+instance (KnownNat n) => Monad (Array n) where
   return = pure
-  Array v >>= f = Array (V.concatMap (toVector . f) v)
+  Array v >>= f = Array (V.imap (\i a -> toVector (f a) ! i) v)
 
 instance Foldable (Array n) where
   foldMap f (Array v) = foldMap f v
 
 instance Traversable (Array n) where
   traverse f (Array v) = fmap Array (traverse f v)
+
+instance (Semigroup a, KnownNat n) => Semigroup (Array n a) where
+  Array a <> Array b = Array (V.zipWith (<>) a b)
+
+instance (Monoid a, KnownNat n) => Monoid (Array n a) where
+  mempty = Array (V.replicate (fromIntegral (natVal (Proxy @n))) mempty)
