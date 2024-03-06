@@ -1,14 +1,20 @@
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
 module Data.Array where
 
 import Data.Vector (Vector, (!))
 import qualified Data.Vector as V
 
 import Data.Kind
-import GHC.TypeLits
+import GHC.TypeNats
 import Data.Proxy
 
 newtype Array (n :: Nat) (a :: Type) where
   Array :: { toVector :: Vector a } -> Array n a
+  deriving (Eq, Ord)
 
 toList :: Array n a -> [a]
 toList = V.toList . toVector
@@ -21,11 +27,12 @@ fromVector v = if V.length v == fromIntegral (natVal (Proxy @n))
 fromList :: forall n a. KnownNat n => [a] -> Maybe (Array n a)
 fromList = fromVector . V.fromList
 
+-- Seems like an update to GHC made doing this difficult
 -- withVec :: Vector a -> (forall n. KnownNat n => Array n a -> b) -> b
--- withVec v f = case someNatVal (fromIntegral (V.length v)) of
+-- withVec v f = case (someNatVal . fromIntegral . V.length) v of
+--     -- Just (SomeNat (Proxy :: Proxy m)) -> f (Array @m v)
 --     Just (SomeNat (Proxy :: Proxy m)) -> f (Array @m v)
-
-deriving instance Eq a => Eq (Array n a)
+--     Nothing -> error "withVec: impossible"
 
 instance Show a => Show (Array n a) where
   show (Array v) = show v
