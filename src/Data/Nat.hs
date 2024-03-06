@@ -10,9 +10,15 @@ import Numeric.Natural
 
 type Nat = Natural
 
+-- This generates everything we need for the Nat kind. Since Nat is an alias for
+-- Natural, we don't have issues with type-level literals always being treated
+-- as Natural.
 $(genSingletons [''Nat])
 
 
+-- The following is a manual implementation of Nat, but this doesn't work
+-- because Haskell treats a type-level literal number as a Natural, even if Nat
+-- has instance Num.
 -- data Nat = Z | S Nat deriving (Show, Eq, Ord)
 
 -- instance Bounded Nat where
