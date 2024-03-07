@@ -6,8 +6,15 @@ import Data.Array
 import Data.Maybe (fromJust)
 import GHC.TypeNats
 
-anArray :: (Array 1 Int)
-anArray = (fromJust . fromList) [1]
+import ArrayTest (arrayProps)
+import Test.Tasty (TestTree, defaultMain, localOption, testGroup)
+import Test.Tasty.QuickCheck as QC
 
 main :: IO ()
-main = print anArray
+main = defaultMain tests
+
+tests :: TestTree
+tests = testGroup "Tests" [properties]
+
+properties :: TestTree
+properties = testGroup "Properties" [arrayProps]
