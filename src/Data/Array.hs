@@ -56,7 +56,7 @@ withList :: [a] -> (forall n. SingI n => Array n a -> b) -> b
 withList l = withVec (V.fromList l)
 
 instance Functor (Array n) where
-  fmap f (Array v) = Array (fmap f v)
+    fmap f (Array v) = Array (fmap f v)
 
 instance SingI n => Applicative (Array n) where
   pure a = Array (V.replicate l a)
@@ -67,10 +67,10 @@ instance SingI n => Monad (Array n) where
   Array v >>= f = Array (V.imap (\i a -> toVector (f a) ! i) v)
 
 instance Foldable (Array n) where
-  foldMap f (Array v) = foldMap f v
+    foldMap f (Array v) = foldMap f v
 
 instance Traversable (Array n) where
-  traverse f (Array v) = fmap Array (traverse f v)
+    traverse f (Array v) = fmap Array (traverse f v)
 
 instance (Semigroup a, SingI n) => Semigroup (Array n a) where
   Array a <> Array b = Array (V.zipWith (<>) a b)
