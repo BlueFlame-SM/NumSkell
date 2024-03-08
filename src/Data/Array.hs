@@ -1,8 +1,9 @@
 {-# LANGUAGE GADTs #-}
-{-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE PolyKinds #-}
 module Data.Array where
 
 import Data.Vector (Vector, (!))
@@ -27,10 +28,10 @@ fromVector v = if V.length v == fromIntegral (natVal (Proxy @n))
 fromList :: forall n a. KnownNat n => [a] -> Maybe (Array n a)
 fromList = fromVector . V.fromList
 
--- Seems like an update to GHC made doing this difficult
+-- TypeApplications doesn't seem to work with Nat:
+-- Error: Expected a type, but 'n' has kind 'Nat'
 -- withVec :: Vector a -> (forall n. KnownNat n => Array n a -> b) -> b
 -- withVec v f = case (someNatVal . fromIntegral . V.length) v of
---     -- Just (SomeNat (Proxy :: Proxy m)) -> f (Array @m v)
 --     Just (SomeNat (Proxy :: Proxy m)) -> f (Array @m v)
 --     Nothing -> error "withVec: impossible"
 
@@ -59,3 +60,7 @@ instance (Semigroup a, KnownNat n) => Semigroup (Array n a) where
 
 instance (Monoid a, KnownNat n) => Monoid (Array n a) where
   mempty = Array (V.replicate (fromIntegral (natVal (Proxy @n))) mempty)
+
+
+append :: forall n m a. Array n a -> Array m a -> Array (n + m) a
+append (Array a) (Array b) = Array (a <> b)

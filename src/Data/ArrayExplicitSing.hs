@@ -1,17 +1,20 @@
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeOperators #-}
 module Data.ArrayExplicitSing where
 
 import Data.Singletons
-import Data.Nat
+import GHC.TypeLits.Singletons
+import Prelude.Singletons
 
 import Data.Vector (Vector, (!))
 import qualified Data.Vector as V
 
 
-newtype Array (n :: Nat) a where
+newtype Array (n :: Natural) a where
   Array :: { toVector :: Vector a } -> Array n a
 
 instance Show a => Show (Array n a) where
@@ -39,7 +42,7 @@ fromList = fromVector . V.fromList
 
 withVec_ :: Vector a -> (forall n. Sing n -> Array n a -> b) -> b
 withVec_ v f = case toSing (fromIntegral (V.length v)) of
-    SomeSing (s :: Sing m) -> f s (Array v)
+  SomeSing (s :: Sing m) -> f s (Array v)
 
 withVec :: Vector a -> (forall n. SingI n => Array n a -> b) -> b
 withVec v f = withVec_ v (\s a -> withSingI s (f a))
@@ -70,3 +73,26 @@ instance (Semigroup a, SingI n) => Semigroup (Array n a) where
 instance (Monoid a, SingI n) => Monoid (Array n a) where
   mempty = Array (V.replicate l mempty)
     where l = fromEnum (fromSing (sing :: Sing n))
+
+append :: Array n a -> Array m a -> Array (n + m) a
+append (Array a) (Array b) = Array (a <> b)
+
+split_ :: Sing n -> Array (n + m) a -> (Array n a, Array m a)
+split_ s v = (Array (V.take l (toVector v)), Array (V.drop l (toVector v)))
+  where l = fromEnum (fromSing s)
+
+split :: SingI n => Array (n + m) a -> (Array n a, Array m a)
+split = split_ sing
+
+-- Note: When giving the type of an array, the type
+oneTwoThree :: Num a => Array 3 a
+oneTwoThree = Array (V.fromList [1, 2, 3])
+
+fourFiveSix :: Num a => Array 3 a
+fourFiveSix = Array (V.fromList [4, 5, 6])
+
+testAppend :: Num a => Array 6 a
+testAppend = oneTwoThree `append` fourFiveSix
+
+testSplit :: Num a => (Array 2 a, Array 4 a)
+testSplit = split (oneTwoThree `append` fourFiveSix)
