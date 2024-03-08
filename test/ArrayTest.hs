@@ -14,17 +14,17 @@ import Test.Tasty
 import Test.Tasty.QuickCheck as QC
 import Utils
 
-prop_fromList_preservesLength :: [Int] -> Bool
+prop_fromList_preservesLength :: [a] -> Bool
 prop_fromList_preservesLength xs =
     let
         n = length xs
 
-        anArray :: (KnownNat n) => (Array n Int)
+        anArray :: forall n a. (KnownNat n) => Array n a
         anArray = (fromJust . fromList) xs
      in
         length anArray == length xs
 
-prop_toList_preservesLength :: (KnownNat n) => Array n a -> Bool
+prop_toList_preservesLength :: forall n a. (KnownNat n) => Array n a -> Bool
 prop_toList_preservesLength as = (length . toList) as == length as
 
 arrayProps :: TestTree
