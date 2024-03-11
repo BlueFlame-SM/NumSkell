@@ -5,6 +5,8 @@ import Data.Vector (Vector)
 import qualified Data.Vector as V
 
 
+-- Example NdArray, but I think it's better we just wrap hmatrix
+
 type Shape = [Int]
 type Index = [Int]  -- Could be more complex, e.g. range selection
 
