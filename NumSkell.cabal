@@ -62,6 +62,7 @@ library
     -- Modules exported by the library.
     exposed-modules:
         Data.Array
+        Data.NdArray
 
     -- Modules included in this library but not exported.
     other-modules:
@@ -76,8 +77,6 @@ library
         vector,
         singletons,
         singletons-base
-
-
 
     -- Directories containing source files.
     hs-source-dirs:   src
