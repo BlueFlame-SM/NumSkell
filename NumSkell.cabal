@@ -63,6 +63,7 @@ library
     exposed-modules:
         Data.Array
         Data.NdArray
+        Data.WrappedHmatrixMatrix
 
     -- Modules included in this library but not exported.
     other-modules:
@@ -76,7 +77,8 @@ library
         base ^>=4.17.2.1,
         vector,
         singletons,
-        singletons-base
+        singletons-base,
+        hmatrix
 
     -- Directories containing source files.
     hs-source-dirs:   src
