@@ -13,6 +13,7 @@ import Data.Singletons
       SingKind(fromSing, toSing),
       SomeSing(SomeSing) )
 import GHC.TypeLits.Singletons
+import qualified GHC.TypeLits as TL
 import Prelude.Singletons
 
 import Data.Vector (Vector, (!))
@@ -89,9 +90,18 @@ split_ s v = (Array (V.take l (toVector v)), Array (V.drop l (toVector v)))
 split :: SingI n => Array (n + m) a -> (Array n a, Array m a)
 split = split_ sing
 
+index :: ((m <= n) ~ 'True, KnownNat m)  
+        => Array n a -> proxy m -> a
+index v m = (toVector v) V.! (toInt m)
+  where toInt :: KnownNat n => proxy n -> Int
+        toInt = fromInteger .  (TL.natVal)
+
 -- Note: When giving the type of an array, the type
 oneTwoThree :: Num a => Array 3 a
 oneTwoThree = Array (V.fromList [1, 2, 3])
+
+testIndex :: Integer
+testIndex = index oneTwoThree (Proxy :: Proxy 1)
 
 fourFiveSix :: Num a => Array 3 a
 fourFiveSix = Array (V.fromList [4, 5, 6])
