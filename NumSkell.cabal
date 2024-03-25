@@ -61,24 +61,24 @@ library
 
     -- Modules exported by the library.
     exposed-modules:
-        Data.Array,
-        Data.ArrayExplicitSing,
-        Data.Nat
+        Data.Array
+        Data.NdArray
+        Data.WrappedHmatrixMatrix
 
     -- Modules included in this library but not exported.
-    -- other-modules:
+    other-modules:
+        Data.OldArray
 
     -- LANGUAGE extensions used by modules in this package.
-    -- other-extensions:
+    other-extensions: DataKinds
 
     -- Other library packages from which modules are imported.
     build-depends:
         base ^>=4.17.2.1,
         vector,
         singletons,
-        singletons-base
-
-
+        singletons-base,
+        hmatrix
 
     -- Directories containing source files.
     hs-source-dirs:   src
