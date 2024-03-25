@@ -4,6 +4,7 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE StandaloneDeriving #-}
 module Data.Array (
   Array,
   toList,
@@ -14,6 +15,7 @@ module Data.Array (
   append,
   split,
   index,
+  Fin,
   arr1, arr2, arr3, arr4, arr5, arr6, arr7, arr8
 ) where
 
@@ -25,11 +27,35 @@ import Data.Singletons
       SomeSing(SomeSing) )
 import GHC.TypeLits.Singletons
 import qualified GHC.TypeLits as TL
+import Data.Singletons.TH
 import Prelude.Singletons
 
 import Data.Vector (Vector, (!))
 import qualified Data.Vector as V
 
+newtype Fin (n :: Natural) = UnsafeFin {unFin :: Int}
+
+toFin_ :: Sing n -> Int -> Maybe (Fin n)
+toFin_ s i | 0 <= i && i < l = Just (UnsafeFin i)
+           | otherwise = Nothing
+  where l = fromEnum (fromSing s)
+
+toFin :: SingI n => Int -> Maybe (Fin n)
+toFin = toFin_ sing
+
+instance SingI n => Num (Fin n) where
+  signum (UnsafeFin 0) = UnsafeFin 0
+  signum _             = UnsafeFin 1
+  abs = id
+  (+) (UnsafeFin a) (UnsafeFin b) = UnsafeFin ((a + b) `mod` l)
+    where l = fromEnum (fromSing (sing :: Sing n))
+  (*) (UnsafeFin a) (UnsafeFin b) = UnsafeFin ((a * b) `mod` l)
+    where l = fromEnum (fromSing (sing :: Sing n))
+  (-) (UnsafeFin a) (UnsafeFin b) = UnsafeFin ((a - b) `mod` l)
+    where l = fromEnum (fromSing (sing :: Sing n))
+  fromInteger n | 0 <= n && n < l = UnsafeFin (fromInteger n)
+                | otherwise = error "negative Fin"
+                where l = toInteger $ fromEnum (fromSing (sing :: Sing n))
 
 newtype Array (n :: Natural) a where
   Array :: { toVector :: Vector a } -> Array n a
@@ -101,9 +127,14 @@ split_ s v = (Array (V.take l (toVector v)), Array (V.drop l (toVector v)))
 split :: SingI n => Array (n + m) a -> (Array n a, Array m a)
 split = split_ sing
 
+-- index_ :: Fin n -> Array n a -> a
+-- index_ n v = (toVector v) V.! (toInt n)
+--   where toInt :: Fin n -> Int
+--         toInt Top = 0
+--         toInt (Pop n) = 1 + toInt n
 
-index_ :: (KnownNat m, (m <= n) ~ 'True) => Sing m -> Array n a -> a
-index_ n v = (toVector v) V.! (fromEnum (fromSing n))
+index2 :: Array n a -> Fin n -> a
+index2 v n = toVector v V.! unFin n
 
 index :: ((m <= n) ~ 'True, KnownNat m)  
         => Array n a -> proxy m -> a
@@ -154,3 +185,6 @@ testAppend = oneTwoThree `append` fourFiveSix
 
 testSplit :: Num a => (Array 2 a, Array 4 a)
 testSplit = split (oneTwoThree `append` fourFiveSix)
+
+testIndex2 :: Integer
+testIndex2 = index2 oneTwoThree 1
