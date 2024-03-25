@@ -34,16 +34,27 @@ import Data.Vector (Vector, (!))
 import qualified Data.Vector as V
 
 data Fin (n :: Natural) where
-  Top :: Fin n
+  Top :: Fin (n + 1)
   Pop :: Fin n -> Fin (n + 1)
 
 deriving instance Show (Fin n)
 
-toFin_ :: Sing n -> Int -> Maybe (Fin n)
-toFin_ s i | 0 == i = Just Top
-           | 0 < i && i < l = Pop <$> toFin_ (sing :: Sing (n - 1)) (i - 1)
-          | otherwise = Nothing
-  where l = fromEnum (fromSing s)
+-- toFin_ :: Sing n -> Int -> Maybe (Fin (n + 1))
+-- toFin_ s i | i < 0     = Nothing
+--            | otherwise = toFinHelper i
+--   where
+--     toFinHelper :: Int -> Maybe (Fin (n + 1))
+--     toFinHelper 0 = Just Top
+--     toFinHelper j = Pop <$> toFin_ (s + 1) (j - 1)
+
+
+
+-- toFin :: SingI n => Int -> Maybe (Fin (n + 1))
+-- toFin = toFin_ sing
+
+
+
+
 
 
 -- toFin_ :: Sing n -> Int -> Maybe (Fin n)
@@ -147,7 +158,7 @@ split = split_ sing
 -- index2 :: Array n a -> Fin n -> a
 -- index2 v n = toVector v V.! unFin n
 
-index :: ((m <= n) ~ 'True, KnownNat m)  
+index :: ((m <= n) ~ 'True, KnownNat m)
         => Array n a -> proxy m -> a
 index v m = (toVector v) V.! (toInt m)
   where toInt :: KnownNat n => proxy n -> Int
