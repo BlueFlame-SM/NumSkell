@@ -33,29 +33,40 @@ import Prelude.Singletons
 import Data.Vector (Vector, (!))
 import qualified Data.Vector as V
 
-newtype Fin (n :: Natural) = UnsafeFin {unFin :: Int}
+data Fin (n :: Natural) where
+  Top :: Fin n
+  Pop :: Fin n -> Fin (n + 1)
+
+deriving instance Show (Fin n)
 
 toFin_ :: Sing n -> Int -> Maybe (Fin n)
-toFin_ s i | 0 <= i && i < l = Just (UnsafeFin i)
-           | otherwise = Nothing
+toFin_ s i | 0 == i = Just Top
+           | 0 < i && i < l = Pop <$> toFin_ (sing :: Sing (n - 1)) (i - 1)
+          | otherwise = Nothing
   where l = fromEnum (fromSing s)
 
-toFin :: SingI n => Int -> Maybe (Fin n)
-toFin = toFin_ sing
 
-instance SingI n => Num (Fin n) where
-  signum (UnsafeFin 0) = UnsafeFin 0
-  signum _             = UnsafeFin 1
-  abs = id
-  (+) (UnsafeFin a) (UnsafeFin b) = UnsafeFin ((a + b) `mod` l)
-    where l = fromEnum (fromSing (sing :: Sing n))
-  (*) (UnsafeFin a) (UnsafeFin b) = UnsafeFin ((a * b) `mod` l)
-    where l = fromEnum (fromSing (sing :: Sing n))
-  (-) (UnsafeFin a) (UnsafeFin b) = UnsafeFin ((a - b) `mod` l)
-    where l = fromEnum (fromSing (sing :: Sing n))
-  fromInteger n | 0 <= n && n < l = UnsafeFin (fromInteger n)
-                | otherwise = error "negative Fin"
-                where l = toInteger $ fromEnum (fromSing (sing :: Sing n))
+-- toFin_ :: Sing n -> Int -> Maybe (Fin n)
+-- toFin_ s i | 0 <= i && i < l = Just (UnsafeFin i)
+--            | otherwise = Nothing
+--   where l = fromEnum (fromSing s)
+
+-- toFin :: SingI n => Int -> Maybe (Fin n)
+-- toFin = toFin_ sing
+
+-- instance SingI n => Num (Fin n) where
+--   signum (UnsafeFin 0) = UnsafeFin 0
+--   signum _             = UnsafeFin 1
+--   abs = id
+--   (+) (UnsafeFin a) (UnsafeFin b) = UnsafeFin ((a + b) `mod` l)
+--     where l = fromEnum (fromSing (sing :: Sing n))
+--   (*) (UnsafeFin a) (UnsafeFin b) = UnsafeFin ((a * b) `mod` l)
+--     where l = fromEnum (fromSing (sing :: Sing n))
+--   (-) (UnsafeFin a) (UnsafeFin b) = UnsafeFin ((a - b) `mod` l)
+--     where l = fromEnum (fromSing (sing :: Sing n))
+--   fromInteger n | 0 <= n && n < l = UnsafeFin (fromInteger n)
+--                 | otherwise = error "negative Fin"
+--                 where l = toInteger $ fromEnum (fromSing (sing :: Sing n))
 
 newtype Array (n :: Natural) a where
   Array :: { toVector :: Vector a } -> Array n a
@@ -133,8 +144,8 @@ split = split_ sing
 --         toInt Top = 0
 --         toInt (Pop n) = 1 + toInt n
 
-index2 :: Array n a -> Fin n -> a
-index2 v n = toVector v V.! unFin n
+-- index2 :: Array n a -> Fin n -> a
+-- index2 v n = toVector v V.! unFin n
 
 index :: ((m <= n) ~ 'True, KnownNat m)  
         => Array n a -> proxy m -> a
@@ -186,5 +197,5 @@ testAppend = oneTwoThree `append` fourFiveSix
 testSplit :: Num a => (Array 2 a, Array 4 a)
 testSplit = split (oneTwoThree `append` fourFiveSix)
 
-testIndex2 :: Integer
-testIndex2 = index2 oneTwoThree 1
+-- testIndex2 :: Integer
+-- testIndex2 = index2 oneTwoThree (UnsafeFin 5)
