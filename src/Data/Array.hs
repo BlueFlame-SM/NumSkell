@@ -4,7 +4,18 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
-module Data.Array where
+module Data.Array (
+  Array,
+  toList,
+  fromVector,
+  fromList,
+  withVec,
+  withList,
+  append,
+  split,
+  index,
+  arr1, arr2, arr3, arr4, arr5, arr6, arr7, arr8
+) where
 
 import Data.Singletons
     ( withSingI,
@@ -90,6 +101,10 @@ split_ s v = (Array (V.take l (toVector v)), Array (V.drop l (toVector v)))
 split :: SingI n => Array (n + m) a -> (Array n a, Array m a)
 split = split_ sing
 
+
+index_ :: (KnownNat m, (m <= n) ~ 'True) => Sing m -> Array n a -> a
+index_ n v = (toVector v) V.! (fromEnum (fromSing n))
+
 index :: ((m <= n) ~ 'True, KnownNat m)  
         => Array n a -> proxy m -> a
 index v m = (toVector v) V.! (toInt m)
@@ -97,11 +112,39 @@ index v m = (toVector v) V.! (toInt m)
         toInt = fromInteger .  (TL.natVal)
 
 -- Note: When giving the type of an array, the type
+-- smallConstructors
+arr1 :: a -> Array 1 a
+arr1 a = Array $ V.fromList [a]
+
+arr2 :: a -> a -> Array 2 a
+arr2 a b = Array $ V.fromList [a, b]
+
+arr3 :: a -> a -> a -> Array 3 a
+arr3 a b c = Array $ V.fromList $ [a, b, c]
+
+arr4 :: a -> a -> a -> a -> Array 4 a
+arr4 a b c d = Array $ V.fromList $ [a, b, c, d]
+
+arr5 :: a -> a -> a -> a -> a -> Array 5 a
+arr5 a b c d e = Array $ V.fromList $ [a, b, c, d, e]
+
+arr6 :: a -> a -> a -> a -> a -> a -> Array 6 a
+arr6 a b c d e f = Array $ V.fromList $ [a, b, c, d, e, f]
+
+arr7 :: a -> a -> a -> a -> a -> a -> a -> Array 7 a
+arr7 a b c d e f g = Array $ V.fromList $ [a, b, c, d, e, f, g]
+
+arr8 :: a -> a -> a -> a -> a -> a -> a -> a -> Array 8 a
+arr8 a b c d e f g h = Array $ V.fromList $ [a, b, c, d, e, f, g, h]
+
 oneTwoThree :: Num a => Array 3 a
 oneTwoThree = Array (V.fromList [1, 2, 3])
 
 testIndex :: Integer
 testIndex = index oneTwoThree (Proxy :: Proxy 1)
+
+testIndexFails :: Integer
+testIndexFails = index oneTwoThree (Proxy :: Proxy 1)
 
 fourFiveSix :: Num a => Array 3 a
 fourFiveSix = Array (V.fromList [4, 5, 6])
