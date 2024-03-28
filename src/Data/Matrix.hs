@@ -8,7 +8,7 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 
-module Data.WrappedHmatrixMatrix where
+module Data.Matrix where
 
 import Data.Array (Array)
 import qualified Data.Array as A
