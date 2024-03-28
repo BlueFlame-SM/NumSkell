@@ -40,7 +40,7 @@ type Index = (Int, Int)
 
 -- type Shape = (Natural, Natural)
 
-newtype Matrix n m a = Matrix { unMatrix :: Array m (Array n a) }
+newtype Matrix n m a = Matrix {unMatrix :: Array m (Array n a)}
 
 data SquareMatrix n a where
     Matrix0 :: forall n a. SquareMatrix n a
@@ -90,7 +90,7 @@ instance (SingI n, SingI m) => Functor (Matrix n m) where
 
 instance (SingI n, SingI m) => Applicative (Matrix n m) where
     pure = replicate
-    Matrix f <*> Matrix x = Matrix $ A.zipWith ($) (A.zipWith ($) f x) _
+    (<*>) = zipWith ($)
 
 instance (SingI n, SingI m, Num x) => Num (Matrix n m x) where
     (+) = zipWith (+)
