@@ -63,7 +63,7 @@ library
     exposed-modules:
         Data.Array
         Data.NdArray
-        Data.WrappedHmatrixMatrix
+        Data.Matrix
 
     -- Modules included in this library but not exported.
     other-modules:
