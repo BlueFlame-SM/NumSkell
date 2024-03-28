@@ -5,6 +5,8 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE InstanceSigs #-}
 {-
  - This wrapper uses the non-static interface for hmatrix, but there is an
  - (experimental?) static interfaces that has "statically checked dimensions",
@@ -29,7 +31,7 @@ import Data.Array (Array)
 import qualified Data.Array as A
 
 -- import qualified Numeric.LinearAlgebra as H
-import Prelude hiding ((!!))
+import Prelude hiding ((!!), zipWith, replicate)
 
 type Shape = (Int, Int)
 type Index = (Int, Int)
@@ -73,6 +75,28 @@ replicate = pure . pure
 
 zipWith :: (SingI n, SingI m) => (a -> b -> c) -> Matrix n m a -> Matrix n m b -> Matrix n m c
 zipWith = A.zipWith . A.zipWith
+
+add :: (Num x, SingI n, SingI m) => Matrix n m x -> Matrix n m x -> Matrix n m x
+add = zipWith (+)
+
+newtype ElementWise n m x =  ElementWise {unElementWise :: Matrix n m x }
+
+instance (SingI n, SingI m) => Functor (ElementWise n m) where
+        fmap f (ElementWise xs) = ElementWise $ fmap (fmap f) xs
+
+instance (SingI n, SingI m) => Applicative (ElementWise n m) where
+        pure = ElementWise . replicate
+        (<*>) = undefined
+
+instance (SingI n, SingI m, Num x) => Num (ElementWise n m x) where
+      (ElementWise l)  + (ElementWise r) = ElementWise $ zipWith (+) l r
+      (ElementWise l)  - (ElementWise r) = ElementWise $ zipWith (-) l r
+      (ElementWise l)  * (ElementWise r) = ElementWise $ zipWith (*) l r
+      abs = fmap abs
+      signum = fmap signum
+      fromInteger = pure . fromInteger
+
+
 
 -- idMatrix :: forall n a . (KnownNat n) => Proxy n -> a -> a -> SquareMatrix n a
 -- idMatrix n = idMatrix' (natVal n)
