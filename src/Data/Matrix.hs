@@ -115,3 +115,24 @@ idMatrix_ n m = Matrix $ V.fromList $ [if i == j then 1 else 0 | i <- [1 .. n'],
 
 idMatrix :: forall n m a. (Num a, SingI n, SingI m) => Matrix n m a
 idMatrix = idMatrix_ (sing :: Sing n) (sing :: Sing m)
+
+fromVector_ :: Sing n -> Sing m -> Vector a -> Maybe (Matrix n m a)
+fromVector_ n m v
+    | n' * m' == V.length v = Just $ Matrix v
+    | otherwise = Nothing
+  where
+    n' = fromIntegral $ fromSing n
+    m' = fromIntegral $ fromSing m
+
+fromVector :: forall n m a. (SingI n, SingI m) => Vector a -> Maybe (Matrix n m a)
+fromVector = fromVector_ (sing :: Sing n) (sing :: Sing m)
+
+withVecAsVec_ :: Vector a -> (forall m. Sing m -> Matrix 1 m a -> b) -> b
+withVecAsVec_ v f = case toSing (fromIntegral (V.length v)) of
+    SomeSing (s :: Sing q) -> f s (Matrix v)
+
+withVecAsVec :: Vector a -> (forall m. (SingI m) => Matrix 1 m a -> b) -> b
+withVecAsVec v f = withVecAsVec_ v (\s a -> withSingI s (f a))
+
+withListAsVec :: [a] -> (forall m. (SingI m) => Matrix 1 m a -> b) -> b
+withListAsVec l = withVecAsVec (V.fromList l)
