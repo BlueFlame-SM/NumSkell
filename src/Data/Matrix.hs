@@ -121,8 +121,6 @@ showMatrix (Matrix v) = showMatrix_ (sing :: Sing n) (sing :: Sing m) (Matrix v)
 instance (SingI n, SingI m, Show a) => Show (Matrix n m a) where
     show = showMatrix
 
-exampleA :: Matrix 2 2 Int
-exampleA = Matrix $ V.fromList [1, 2, 3, 4]
 
 idMatrix_ :: (Num a) => Sing n -> Sing m -> Matrix n m a
 idMatrix_ n m = Matrix $ V.fromList $ [if i == j then 1 else 0 | i <- [1 .. n'], j <- [1 .. m']]
@@ -154,5 +152,15 @@ withVecAsVec v f = withVecAsVec_ v (\s a -> withSingI s (f a))
 withListAsVec :: [a] -> (forall m. (SingI m) => Matrix 1 m a -> b) -> b
 withListAsVec l = withVecAsVec (V.fromList l)
 
+exampleA :: Matrix 2 2 Int
+exampleA = Matrix $ V.fromList [1, 2, 3, 4]
+
 exampleB :: Matrix 2 3 Int
 exampleB = Matrix $ V.fromList [1, 2, 3, 4, 5, 6]
+
+exampleC :: Matrix 3 2 Int
+exampleC = Matrix $ V.fromList [10, 11, 20, 21, 30, 31]
+
+-- Should be [[140, 146], [320, 335]]
+matrixMultExample :: Matrix 2 2 Int 
+matrixMultExample = matrixMult exampleB exampleC
