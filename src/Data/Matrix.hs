@@ -1,8 +1,8 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs #-}
-{-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE NoStarIsType #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
@@ -35,9 +35,6 @@ type Index = (Int, Int)
 
 newtype Matrix (n :: Natural) (m :: Natural) a = Matrix { toVector :: Vector a }
     deriving (Eq, Ord)
-
-
-
 
 empty :: Matrix 0 0 a
 empty = Matrix V.empty
@@ -105,7 +102,14 @@ showMatrix (Matrix v) = showMatrix_ (sing :: Sing n) (sing :: Sing m) (Matrix v)
 instance (SingI n, SingI m, Show a) => Show (Matrix n m a) where
     show = showMatrix
 
+reshape :: (SingI n, SingI m, SingI k, SingI l, n * m ~ k * l) => Matrix n m a -> Matrix k l a
+reshape (Matrix v) = Matrix v
 
 exampleA :: Matrix 2 2 Int
 exampleA = Matrix $ V.fromList [1, 2, 3, 4]
+
+exampleB :: Matrix 2 3 Int
+exampleB = Matrix $ V.fromList [1, 2, 3, 4, 5, 6]
+
+
 -- exampleIndexRow = (indexRow exampleA (Proxy :: Proxy 1))
