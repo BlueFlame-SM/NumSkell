@@ -17,6 +17,7 @@ module Data.Array (
   split,
   index,
   cons,
+  zipWith,
   replicate,
   Fin,
   arr0, arr1, arr2, arr3, arr4, arr5, arr6, arr7, arr8,
@@ -33,7 +34,7 @@ import GHC.TypeLits.Singletons
 import qualified GHC.TypeLits as TL
 import Data.Singletons.TH
 import Prelude.Singletons
-import Prelude hiding (replicate)
+import Prelude hiding (replicate, zipWith)
 
 import Data.Vector (Vector, (!))
 import qualified Data.Vector as V
@@ -143,6 +144,9 @@ split_ s v = (Array (V.take l (toVector v)), Array (V.drop l (toVector v)))
 
 cons :: SingI n => a -> Array n a -> Array (n + 1) a
 cons a (Array v) = Array (V.cons a v)
+
+zipWith :: SingI n => (a -> b -> c) -> Array n a -> Array n b -> Array n c
+zipWith f (Array xs) (Array ys) = Array (V.zipWith f xs ys)
 
 split :: SingI n => Array (n + m) a -> (Array n a, Array m a)
 split = split_ sing

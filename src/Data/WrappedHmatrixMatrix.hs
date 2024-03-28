@@ -38,11 +38,10 @@ type Index = (Int, Int)
 
 type Matrix n m a = Array m (Array n a)
 
-data AnyMatrix a where
-  Matrix0 :: forall a . AnyMatrix a
-  MatrixN :: forall n a . KnownNat n => Matrix n n a -> AnyMatrix a
-  MatrixN' :: forall n a . SingI n => Matrix n n a -> AnyMatrix a
-
+data SquareMatrix n a where
+  Matrix0  :: forall n a .  SquareMatrix n a
+  MatrixN  :: forall n a . KnownNat n => Matrix n n a -> SquareMatrix n a
+  MatrixN' :: forall n a . SingI n => Matrix n n a -> SquareMatrix n a
 
 empty :: Matrix 0 0 a
 empty = A.empty
@@ -72,24 +71,27 @@ index mat m n = A.index (A.index mat m ) n
 replicate :: (SingI n, SingI m) => a -> Matrix n m a
 replicate = pure . pure
 
-idMatrix :: forall n a . (KnownNat n) => Proxy n -> a -> a -> AnyMatrix a
-idMatrix n = idMatrix' (natVal n)
+zipWith :: (SingI n, SingI m) => (a -> b -> c) -> Matrix n m a -> Matrix n m b -> Matrix n m c
+zipWith = A.zipWith . A.zipWith
 
-idMatrix' :: Natural -> a -> a -> AnyMatrix a
-idMatrix' 0 zero one = Matrix0
-idMatrix' n zero one = idMatrixHelp2 zero one (idMatrix' (n - 1) zero one)
+-- idMatrix :: forall n a . (KnownNat n) => Proxy n -> a -> a -> SquareMatrix n a
+-- idMatrix n = idMatrix' (natVal n)
 
-idMatrixHelp2 :: forall n a . a -> a -> AnyMatrix a -> AnyMatrix a
-idMatrixHelp2 zero one Matrix0        = MatrixN' $ idMatrixHelp zero one empty
-idMatrixHelp2 zero one (MatrixN  mat) = MatrixN' $ idMatrixHelp zero one mat
-idMatrixHelp2 zero one (MatrixN' mat) = MatrixN' $ idMatrixHelp zero one mat
+-- idMatrix' :: Natural -> a -> a -> SquareMatrix n a
+-- idMatrix' 0 zero one = Matrix0
+-- idMatrix' n zero one = idMatrixHelp2 zero one (idMatrix' (n - 1) zero one)
 
-idMatrixHelp :: forall n a . (SingI n, KnownNat (n + 1)) => a -> a -> Matrix n n a -> Matrix (n + 1) (n + 1) a
-idMatrixHelp zero one mat = A.cons fstRow otherRows
-        where fstRow :: Array (n + 1) a
-              fstRow = A.cons one (pure zero)
-              otherRows :: Matrix (n + 1) n a
-              otherRows = fmap (A.cons zero) mat
+-- idMatrixHelp2 :: forall n a . a -> a -> SquareMatrix n a -> SquareMatrix (n + 1) a
+-- idMatrixHelp2 zero one Matrix0        = MatrixN' $ idMatrixHelp zero one empty
+-- idMatrixHelp2 zero one (MatrixN  mat) = undefined $ idMatrixHelp zero one mat
+-- idMatrixHelp2 zero one (MatrixN' mat) = undefined $ idMatrixHelp zero one mat
+
+-- idMatrixHelp :: forall n a . (SingI n) => a -> a -> Matrix n n a -> Matrix (n + 1) (n + 1) a
+-- idMatrixHelp zero one mat = A.cons fstRow otherRows
+--         where fstRow :: Array (n + 1) a
+--               fstRow = A.cons one (pure zero)
+--               otherRows :: Matrix (n + 1) n a
+--               otherRows = fmap (A.cons zero) mat
 
 
 -- (!?) :: Matrix a -> Index -> Maybe a
