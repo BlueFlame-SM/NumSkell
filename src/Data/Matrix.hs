@@ -2,11 +2,11 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE KindSignatures #-}
-{-# LANGUAGE NoStarIsType #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE NoStarIsType #-}
 
 module Data.Matrix where
 
@@ -69,21 +69,28 @@ instance (SingI n, SingI m) => Applicative (Matrix n m) where
     pure = replicate
     (<*>) = zipWith ($)
 
-matrixMult :: forall n m k a . (SingI n, SingI k, SingI m, Num a)
-            => Matrix n m a -> Matrix m k a -> Matrix n k a
+matrixMult ::
+    forall n m k a.
+    (SingI n, SingI k, SingI m, Num a) =>
+    Matrix n m a ->
+    Matrix m k a ->
+    Matrix n k a
 matrixMult = matrixMult_ (sing :: Sing n) (sing :: Sing m) (sing :: Sing k)
 
 matrixMult_ :: (Num a) => Sing n -> Sing m -> Sing p -> Matrix n m a -> Matrix m p a -> Matrix n p a
 matrixMult_ n' m' p' (Matrix xs) (Matrix ys) = Matrix $ V.generate (n * p) fromIndex
-    where n = fromIntegral $ fromSing n'
-          m = fromIntegral $ fromSing m'
-          p = fromIntegral $ fromSing p'
-          productSum i j = let ks = [0 .. m - 1]
-                               as   = [xs ! (i * m + k) | k <- ks]
-                               bs   = [ys ! (k * p + j) | k <- ks]
-                           in P.sum $ P.zipWith (*) as bs
-          fromIndex i' = let (i, j) = i' `divMod` p
-                         in productSum i j
+  where
+    n = fromIntegral $ fromSing n'
+    m = fromIntegral $ fromSing m'
+    p = fromIntegral $ fromSing p'
+    productSum i j =
+        let ks = [0 .. m - 1]
+            as = [xs ! (i * m + k) | k <- ks]
+            bs = [ys ! (k * p + j) | k <- ks]
+         in P.sum $ P.zipWith (*) as bs
+    fromIndex i' =
+        let (i, j) = i' `divMod` p
+         in productSum i j
 
 instance (SingI n, SingI m, Num x) => Num (Matrix n m x) where
     (+) = zipWith (+)
@@ -151,12 +158,30 @@ withVecAsVec v f = withVecAsVec_ v (\s a -> withSingI s (f a))
 withListAsVec :: [a] -> (forall m. (SingI m) => Matrix 1 m a -> b) -> b
 withListAsVec l = withVecAsVec (V.fromList l)
 
+withVec_ :: Vector (Vector a) -> (forall n m. Sing n -> Sing m -> Matrix n m a -> b) -> b
+withVec_ v f =
+    let
+        n = V.length v
+        m = V.foldl' min 0 (V.map V.length v)
+        truncatedV = foldMap (V.slice 0 m) v
+     in
+        case (toSing $ fromIntegral n, toSing $ fromIntegral m) of
+            (SomeSing (s :: Sing q), SomeSing (t :: Sing r)) -> f s t (Matrix truncatedV)
+
+withVec :: Vector (Vector a) -> (forall n m. (SingI n, SingI m) => Matrix n m a -> b) -> b
+withVec v f = withVec_ v (\s t a -> withSingI s (withSingI t (f a)))
+
+withList :: [[a]] -> (forall n m. (SingI n, SingI m) => Matrix n m a -> b) -> b
+withList l = withVec (V.fromList (map V.fromList l))
+
+fromList :: (SingI n, SingI m) => [a] -> Maybe (Matrix n m a)
+fromList = fromVector . V.fromList
+
 exampleA :: Matrix 2 2 Int
 exampleA = Matrix $ V.fromList [1, 2, 3, 4]
 
 exampleB :: Matrix 2 3 Int
 exampleB = Matrix $ V.fromList [1, 2, 3, 4, 5, 6]
-
 
 -- exampleIndexRow = (indexRow exampleA (Proxy :: Proxy 1))
 exampleC :: Matrix 3 2 Int
@@ -170,5 +195,5 @@ matrixMultExample :: Matrix 2 2 Int
 matrixMultExample = matrixMult exampleB exampleC
 
 matrixMultExample2 :: Matrix 3 1 Int -- Should be [[2*10 + 3*11], [2 * 20 + 3 * 21], [2 * 30 + 3 * 31]]
-                                    -- = [[53], [103],[153]]
+-- = [[53], [103],[153]]
 matrixMultExample2 = matrixMult exampleC exampleD
