@@ -23,6 +23,7 @@ import GHC.TypeLits.Singletons
 import Prelude.Singletons
 import qualified Data.Vector as V
 import Data.Vector (Vector, (!))
+import Data.List (intercalate)
 
 -- import qualified Numeric.LinearAlgebra as H
 import Prelude hiding (replicate, zipWith, (!!))
@@ -34,6 +35,9 @@ type Index = (Int, Int)
 
 newtype Matrix (n :: Natural) (m :: Natural) a = Matrix { toVector :: Vector a }
     deriving (Eq, Ord)
+
+
+
 
 empty :: Matrix 0 0 a
 empty = Matrix V.empty
@@ -75,4 +79,33 @@ instance (SingI n, SingI m, Num x) => Num (Matrix n m x) where
     signum = fmap signum
     fromInteger = pure . fromInteger
 
+instance (SingI n, SingI m) => Foldable (Matrix n m) where
+    foldMap f (Matrix v) = foldMap f v
+
+instance (SingI n, SingI m) => Traversable (Matrix n m) where
+    traverse f (Matrix v) = fmap Matrix (traverse f v)
+
+instance (SingI n, SingI m, Semigroup a) => Semigroup (Matrix n m a) where
+    (<>) = zipWith (<>)
+
+instance (SingI n, SingI m, Monoid a) => Monoid (Matrix n m a) where
+    mempty = replicate mempty
+
+
+showMatrix_ :: (Show a) => Sing n -> Sing m -> Matrix n m a -> String
+showMatrix_ n m (Matrix v) = "[" ++ intercalate "\n " (map showRow [0..n'-1]) ++ "]"
+  where
+    n' = fromIntegral $ fromSing n
+    m' = fromIntegral $ fromSing m
+    showRow i = "[" ++ unwords (V.toList $ show <$> V.slice (i * m') m' v) ++ "]"
+
+showMatrix :: forall n m a . (SingI n, SingI m, Show a) => Matrix n m a -> String
+showMatrix (Matrix v) = showMatrix_ (sing :: Sing n) (sing :: Sing m) (Matrix v)
+
+instance (SingI n, SingI m, Show a) => Show (Matrix n m a) where
+    show = showMatrix
+
+
+exampleA :: Matrix 2 2 Int
+exampleA = Matrix $ V.fromList [1, 2, 3, 4]
 -- exampleIndexRow = (indexRow exampleA (Proxy :: Proxy 1))
