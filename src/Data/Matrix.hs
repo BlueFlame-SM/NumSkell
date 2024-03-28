@@ -73,16 +73,16 @@ matrixMult :: forall n m k a . (SingI n, SingI k, SingI m, Num a)
             => Matrix n m a -> Matrix m k a -> Matrix n k a
 matrixMult = matrixMult_ (sing :: Sing n) (sing :: Sing m) (sing :: Sing k)
 
-matrixMult_ :: (Num a) => Sing n -> Sing m -> Sing k -> Matrix n m a -> Matrix m k a -> Matrix n k a
-matrixMult_ n' m' k' (Matrix xs) (Matrix ys) = Matrix $ V.generate (n * k) fromIndex
+matrixMult_ :: (Num a) => Sing n -> Sing m -> Sing p -> Matrix n m a -> Matrix m p a -> Matrix n p a
+matrixMult_ n' m' p' (Matrix xs) (Matrix ys) = Matrix $ V.generate (n * p) fromIndex
     where n = fromIntegral $ fromSing n'
           m = fromIntegral $ fromSing m'
-          k = fromIntegral $ fromSing k'
-          productSum i j = let nums = [0 .. n - 1]
-                               as   = [xs ! (i * n + q) | q <- nums]
-                               bs   = [ys ! (q * n + j) | q <- nums]
+          p = fromIntegral $ fromSing p'
+          productSum i j = let ks = [0 .. m - 1]
+                               as   = [xs ! (i * m + k) | k <- ks]
+                               bs   = [ys ! (k * p + j) | k <- ks]
                            in P.sum $ P.zipWith (*) as bs
-          fromIndex i' = let (i, j) = i' `divMod` k
+          fromIndex i' = let (i, j) = i' `divMod` p
                          in productSum i j
 
 instance (SingI n, SingI m, Num x) => Num (Matrix n m x) where
@@ -162,6 +162,13 @@ exampleB = Matrix $ V.fromList [1, 2, 3, 4, 5, 6]
 exampleC :: Matrix 3 2 Int
 exampleC = Matrix $ V.fromList [10, 11, 20, 21, 30, 31]
 
+exampleD :: Matrix 2 1 Int
+exampleD = Matrix $ V.fromList [2, 3]
+
 -- Should be [[140, 146], [320, 335]]
 matrixMultExample :: Matrix 2 2 Int
 matrixMultExample = matrixMult exampleB exampleC
+
+matrixMultExample2 :: Matrix 3 1 Int -- Should be [[2*10 + 3*11], [2 * 20 + 3 * 21], [2 * 30 + 3 * 31]]
+                                    -- = [[53], [103],[153]]
+matrixMultExample2 = matrixMult exampleC exampleD
