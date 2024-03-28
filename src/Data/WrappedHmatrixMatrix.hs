@@ -40,7 +40,7 @@ type Index = (Int, Int)
 
 -- type Shape = (Natural, Natural)
 
-type Matrix n m a = Array m (Array n a)
+newtype Matrix n m a = Matrix { unMatrix :: Array m (Array n a) }
 
 data SquareMatrix n a where
     Matrix0 :: forall n a. SquareMatrix n a
@@ -48,10 +48,10 @@ data SquareMatrix n a where
     MatrixN' :: forall n a. (SingI n) => Matrix n n a -> SquareMatrix n a
 
 empty :: Matrix 0 0 a
-empty = A.empty
+empty = Matrix A.empty
 
 singleton :: a -> Matrix 1 1 a
-singleton x = A.singleton (A.singleton x)
+singleton x = Matrix $ A.singleton (A.singleton x)
 
 -- newtype Matrix (s :: Shape) where
 --     Matrix :: (H.Element a, H.Indexable (H.Vector a) a)
@@ -69,7 +69,7 @@ indexRow ::
     Matrix n m a ->
     proxy i ->
     Array n a
-indexRow = A.index
+indexRow = A.index . unMatrix
 
 index ::
     (KnownNat m', KnownNat n', (m' <= m) ~ 'True, (n' <= n) ~ 'True) =>
@@ -77,7 +77,7 @@ index ::
     proxy m' ->
     proxy n' ->
     a
-index mat m n = A.index (A.index mat m) n
+index mat m = A.index (A.index mat m)
 
 replicate :: (SingI n, SingI m) => a -> Matrix n m a
 replicate = pure . pure
@@ -88,19 +88,17 @@ zipWith = A.zipWith . A.zipWith
 add :: (Num x, SingI n, SingI m) => Matrix n m x -> Matrix n m x -> Matrix n m x
 add = zipWith (+)
 
-newtype ElementWise n m x = ElementWise {unElementWise :: Matrix n m x}
+instance (SingI n, SingI m) => Functor (Matrix n m) where
+    fmap f (Matrix xs) = Matrix $ fmap (fmap f) xs
 
-instance (SingI n, SingI m) => Functor (ElementWise n m) where
-    fmap f (ElementWise xs) = ElementWise $ fmap (fmap f) xs
+instance (SingI n, SingI m) => Applicative (Matrix n m) where
+    pure = replicate
+    Matrix f <*> Matrix x = Matrix $ A.zipWith ($) (A.zipWith ($) f x) _
 
-instance (SingI n, SingI m) => Applicative (ElementWise n m) where
-    pure = ElementWise . replicate
-    ElementWise f <*> ElementWise x = ElementWise $ A.zipWith ($) (A.zipWith ($) f x) _
-
-instance (SingI n, SingI m, Num x) => Num (ElementWise n m x) where
-    (ElementWise l) + (ElementWise r) = ElementWise $ zipWith (+) l r
-    (ElementWise l) - (ElementWise r) = ElementWise $ zipWith (-) l r
-    (ElementWise l) * (ElementWise r) = ElementWise $ zipWith (*) l r
+instance (SingI n, SingI m, Num x) => Num (Matrix n m x) where
+    (+) = zipWith (+)
+    (-) = zipWith (-)
+    (*) = zipWith (*)
     abs = fmap abs
     signum = fmap signum
     fromInteger = pure . fromInteger
