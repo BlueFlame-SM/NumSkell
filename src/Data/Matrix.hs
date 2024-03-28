@@ -63,11 +63,30 @@ zipWith :: (SingI n, SingI m) => (a -> b -> c) -> Matrix n m a -> Matrix n m b -
 zipWith f (Matrix x) (Matrix y) = Matrix $ V.zipWith f x y
 
 instance (SingI n, SingI m) => Functor (Matrix n m) where
+    fmap :: (SingI n, SingI m) => (a -> b) -> Matrix n m a -> Matrix n m b
     fmap f (Matrix xs) = Matrix $ fmap f xs
 
 instance (SingI n, SingI m) => Applicative (Matrix n m) where
+    pure :: (SingI n, SingI m) => a -> Matrix n m a
     pure = replicate
+    (<*>) :: (SingI n, SingI m) => Matrix n m (a -> b) -> Matrix n m a -> Matrix n m b
     (<*>) = zipWith ($)
+
+matrixMult :: forall n m k a . (SingI n, SingI k, SingI m, Num a) 
+            => Matrix n m a -> Matrix m k a -> Matrix n k a
+matrixMult = matrixMult_ (sing :: Sing n) (sing :: Sing m) (sing :: Sing k) 
+
+matrixMult_ :: (Num a) => Sing n -> Sing m -> Sing k -> Matrix n m a -> Matrix m k a -> Matrix n k a
+matrixMult_ n' m' k' (Matrix xs) (Matrix ys) = Matrix $ V.generate (n * k) fromIndex
+    where n = fromIntegral $ fromSing n'
+          m = fromIntegral $ fromSing m'
+          k = fromIntegral $ fromSing k'
+          productSum i j = let nums = [0 .. n - 1]
+                               as   = [xs ! (i * n + q) | q <- nums]
+                               bs   = [ys ! (q * n + j) | q <- nums]
+                           in P.sum $ P.zipWith (*) as bs
+          fromIndex i' = let (i, j) = i' `divMod` k
+                         in productSum i j
 
 instance (SingI n, SingI m, Num x) => Num (Matrix n m x) where
     (+) = zipWith (+)
@@ -105,8 +124,6 @@ instance (SingI n, SingI m, Show a) => Show (Matrix n m a) where
 exampleA :: Matrix 2 2 Int
 exampleA = Matrix $ V.fromList [1, 2, 3, 4]
 
--- exampleIndexRow = (indexRow exampleA (Proxy :: Proxy 1))
-
 idMatrix_ :: (Num a) => Sing n -> Sing m -> Matrix n m a
 idMatrix_ n m = Matrix $ V.fromList $ [if i == j then 1 else 0 | i <- [1 .. n'], j <- [1 .. m']]
   where
@@ -136,3 +153,6 @@ withVecAsVec v f = withVecAsVec_ v (\s a -> withSingI s (f a))
 
 withListAsVec :: [a] -> (forall m. (SingI m) => Matrix 1 m a -> b) -> b
 withListAsVec l = withVecAsVec (V.fromList l)
+
+exampleB :: Matrix 2 3 Int
+exampleB = Matrix $ V.fromList [1, 2, 3, 4, 5, 6]
