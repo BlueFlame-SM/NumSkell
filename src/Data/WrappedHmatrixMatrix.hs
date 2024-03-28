@@ -70,7 +70,7 @@ index :: (KnownNat m', KnownNat n', (m' <= m) ~ 'True, (n' <= n) ~ 'True) =>
 index mat m n = A.index (A.index mat m ) n
 
 replicate :: (SingI n, SingI m) => a -> Matrix n m a
-replicate x = pure (pure x)
+replicate = pure . pure
 
 idMatrix :: forall n a . (KnownNat n) => Proxy n -> a -> a -> AnyMatrix a
 idMatrix n = idMatrix' (natVal n)
