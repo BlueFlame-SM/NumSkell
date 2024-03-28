@@ -77,16 +77,13 @@ index ::
     proxy m' ->
     proxy n' ->
     a
-index mat m = A.index (A.index mat m)
+index mat m = A.index (A.index (unMatrix mat) m)
 
 replicate :: (SingI n, SingI m) => a -> Matrix n m a
-replicate = pure . pure
+replicate = Matrix . pure . pure
 
 zipWith :: (SingI n, SingI m) => (a -> b -> c) -> Matrix n m a -> Matrix n m b -> Matrix n m c
-zipWith = A.zipWith . A.zipWith
-
-add :: (Num x, SingI n, SingI m) => Matrix n m x -> Matrix n m x -> Matrix n m x
-add = zipWith (+)
+zipWith f (Matrix x) (Matrix y) = Matrix $ A.zipWith (A.zipWith f) x y
 
 instance (SingI n, SingI m) => Functor (Matrix n m) where
     fmap f (Matrix xs) = Matrix $ fmap (fmap f) xs
