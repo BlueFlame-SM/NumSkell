@@ -5,6 +5,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE InstanceSigs #-}
 module Data.Array (
   Array,
   toList,
@@ -15,8 +16,11 @@ module Data.Array (
   append,
   split,
   index,
+  cons,
+  replicate,
   Fin,
-  arr1, arr2, arr3, arr4, arr5, arr6, arr7, arr8
+  arr0, arr1, arr2, arr3, arr4, arr5, arr6, arr7, arr8,
+  empty, singleton
 ) where
 
 import Data.Singletons
@@ -29,6 +33,7 @@ import GHC.TypeLits.Singletons
 import qualified GHC.TypeLits as TL
 import Data.Singletons.TH
 import Prelude.Singletons
+import Prelude hiding (replicate)
 
 import Data.Vector (Vector, (!))
 import qualified Data.Vector as V
@@ -39,11 +44,11 @@ data Fin (n :: Natural) where
 
 deriving instance Show (Fin n)
 
-toFin_ :: Sing n -> Int -> Maybe (Fin n)
-toFin_ s i | 0 == i = Just Top
-           | 0 < i && i < l = Pop <$> toFin_ (sing :: Sing (n - 1)) (i - 1)
-          | otherwise = Nothing
-  where l = fromEnum (fromSing s)
+-- toFin_ :: Sing n -> Int -> Maybe (Fin n)
+-- toFin_ s i | 0 == i = Just Top
+--            | 0 < i && i < l = Pop <$> toFin_ (sing :: Sing (n - 1)) (i - 1)
+--           | otherwise = Nothing
+--   where l = fromEnum (fromSing s)
 
 
 -- toFin_ :: Sing n -> Int -> Maybe (Fin n)
@@ -108,6 +113,7 @@ instance Functor (Array n) where
   fmap f (Array v) = Array (fmap f v)
 
 instance SingI n => Applicative (Array n) where
+  pure :: SingI n => a -> Array n a
   pure a = Array (V.replicate l a)
     where l = fromEnum (fromSing (sing :: Sing n))
   Array f <*> Array x = Array (V.zipWith ($) f x)
@@ -135,6 +141,9 @@ split_ :: Sing n -> Array (n + m) a -> (Array n a, Array m a)
 split_ s v = (Array (V.take l (toVector v)), Array (V.drop l (toVector v)))
   where l = fromEnum (fromSing s)
 
+cons :: SingI n => a -> Array n a -> Array (n + 1) a
+cons a (Array v) = Array (V.cons a v)
+
 split :: SingI n => Array (n + m) a -> (Array n a, Array m a)
 split = split_ sing
 
@@ -153,10 +162,21 @@ index v m = (toVector v) V.! (toInt m)
   where toInt :: KnownNat n => proxy n -> Int
         toInt = fromInteger .  (TL.natVal)
 
+replicate :: KnownNat n => proxy n -> a -> Array n a
+replicate n a = Array (V.replicate (fromIntegral (TL.natVal n)) a)
 -- Note: When giving the type of an array, the type
 -- smallConstructors
+arr0 :: Array 0 a
+arr0 = Array V.empty
+
+empty :: Array 0 a
+empty = arr0
+
 arr1 :: a -> Array 1 a
 arr1 a = Array $ V.fromList [a]
+
+singleton :: a -> Array 1 a
+singleton = arr1
 
 arr2 :: a -> a -> Array 2 a
 arr2 a b = Array $ V.fromList [a, b]

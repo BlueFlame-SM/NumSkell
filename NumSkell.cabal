@@ -78,7 +78,7 @@ library
         vector,
         singletons,
         singletons-base,
-        hmatrix
+        -- hmatrix
 
     -- Directories containing source files.
     hs-source-dirs:   src
