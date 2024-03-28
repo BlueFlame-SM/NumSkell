@@ -69,7 +69,8 @@ index :: (KnownNat m', KnownNat n', (m' <= m) ~ 'True, (n' <= n) ~ 'True) =>
         Matrix n m a -> proxy m' -> proxy n' -> a
 index mat m n = A.index (A.index mat m ) n
 
--- replicate :: (SingI n, SingI m)
+replicate :: (SingI n, SingI m) => a -> Matrix n m a
+replicate x = pure (pure x)
 
 idMatrix :: forall n a . (KnownNat n) => Proxy n -> a -> a -> AnyMatrix a
 idMatrix n = idMatrix' (natVal n)

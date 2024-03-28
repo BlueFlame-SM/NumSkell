@@ -158,12 +158,12 @@ split = split_ sing
 
 index :: ((m <= n) ~ 'True, KnownNat m)  
         => Array n a -> proxy m -> a
-index v m = (toVector v) V.! (toInt m)
+index v m = toVector v V.! toInt m
   where toInt :: KnownNat n => proxy n -> Int
-        toInt = fromInteger .  (TL.natVal)
+        toInt = fromInteger .  TL.natVal
 
-replicate :: KnownNat n => proxy n -> a -> Array n a
-replicate n a = Array (V.replicate (fromIntegral (TL.natVal n)) a)
+replicate :: SingI n => a -> Array n a
+replicate = pure
 -- Note: When giving the type of an array, the type
 -- smallConstructors
 arr0 :: Array 0 a
@@ -182,22 +182,22 @@ arr2 :: a -> a -> Array 2 a
 arr2 a b = Array $ V.fromList [a, b]
 
 arr3 :: a -> a -> a -> Array 3 a
-arr3 a b c = Array $ V.fromList $ [a, b, c]
+arr3 a b c = Array . V.fromList $ [a, b, c]
 
 arr4 :: a -> a -> a -> a -> Array 4 a
-arr4 a b c d = Array $ V.fromList $ [a, b, c, d]
+arr4 a b c d = Array . V.fromList $ [a, b, c, d]
 
 arr5 :: a -> a -> a -> a -> a -> Array 5 a
-arr5 a b c d e = Array $ V.fromList $ [a, b, c, d, e]
+arr5 a b c d e = Array . V.fromList $ [a, b, c, d, e]
 
 arr6 :: a -> a -> a -> a -> a -> a -> Array 6 a
-arr6 a b c d e f = Array $ V.fromList $ [a, b, c, d, e, f]
+arr6 a b c d e f = Array . V.fromList $ [a, b, c, d, e, f]
 
 arr7 :: a -> a -> a -> a -> a -> a -> a -> Array 7 a
-arr7 a b c d e f g = Array $ V.fromList $ [a, b, c, d, e, f, g]
+arr7 a b c d e f g = Array . V.fromList $ [a, b, c, d, e, f, g]
 
 arr8 :: a -> a -> a -> a -> a -> a -> a -> a -> Array 8 a
-arr8 a b c d e f g h = Array $ V.fromList $ [a, b, c, d, e, f, g, h]
+arr8 a b c d e f g h = Array . V.fromList $ [a, b, c, d, e, f, g, h]
 
 oneTwoThree :: Num a => Array 3 a
 oneTwoThree = Array (V.fromList [1, 2, 3])
