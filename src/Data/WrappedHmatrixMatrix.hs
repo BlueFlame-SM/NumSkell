@@ -4,6 +4,7 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-
  - This wrapper uses the non-static interface for hmatrix, but there is an
  - (experimental?) static interfaces that has "statically checked dimensions",
@@ -37,6 +38,18 @@ type Index = (Int, Int)
 
 type Matrix n m a = Array m (Array n a)
 
+data AnyMatrix a where
+  Matrix0 :: forall a . AnyMatrix a
+  MatrixN :: forall n a . KnownNat n => Matrix n n a -> AnyMatrix a
+  MatrixN' :: forall n a . SingI n => Matrix n n a -> AnyMatrix a
+
+
+empty :: Matrix 0 0 a
+empty = A.empty
+
+singleton :: a -> Matrix 1 1 a
+singleton x = A.singleton (A.singleton x)
+
 -- newtype Matrix (s :: Shape) where
 --     Matrix :: (H.Element a, H.Indexable (H.Vector a) a)
 --                 => H.Matrix a
@@ -48,15 +61,34 @@ type Matrix n m a = Array m (Array n a)
             -- Matrix n m a -> proxy i -> proxy j -> a
 -- index m i j = A.index (A.index m j) i
 
-indexRow :: (KnownNat i, (i <= m) ~ 'True) => 
+indexRow :: (KnownNat i, (i <= m) ~ 'True) =>
             Matrix n m a -> proxy i -> Array n a
-indexRow = A.index 
+indexRow = A.index
 
 index :: (KnownNat m', KnownNat n', (m' <= m) ~ 'True, (n' <= n) ~ 'True) =>
         Matrix n m a -> proxy m' -> proxy n' -> a
 index mat m n = A.index (A.index mat m ) n
 
+-- replicate :: (SingI n, SingI m)
 
+idMatrix :: forall n a . (KnownNat n) => Proxy n -> a -> a -> AnyMatrix a
+idMatrix n = idMatrix' (natVal n)
+
+idMatrix' :: Natural -> a -> a -> AnyMatrix a
+idMatrix' 0 zero one = Matrix0
+idMatrix' n zero one = idMatrixHelp2 zero one (idMatrix' (n - 1) zero one)
+
+idMatrixHelp2 :: forall n a . a -> a -> AnyMatrix a -> AnyMatrix a
+idMatrixHelp2 zero one Matrix0        = MatrixN' $ idMatrixHelp zero one empty
+idMatrixHelp2 zero one (MatrixN  mat) = MatrixN' $ idMatrixHelp zero one mat
+idMatrixHelp2 zero one (MatrixN' mat) = MatrixN' $ idMatrixHelp zero one mat
+
+idMatrixHelp :: forall n a . (SingI n, KnownNat (n + 1)) => a -> a -> Matrix n n a -> Matrix (n + 1) (n + 1) a
+idMatrixHelp zero one mat = A.cons fstRow otherRows
+        where fstRow :: Array (n + 1) a
+              fstRow = A.cons one (pure zero)
+              otherRows :: Matrix (n + 1) n a
+              otherRows = fmap (A.cons zero) mat
 
 
 -- (!?) :: Matrix a -> Index -> Maybe a
