@@ -1,22 +1,30 @@
+-- |
+-- Module      :  Data.Array
+-- Description :  Provides a fixed-size array type with type-level size constraints.
+--
+-- This module provides a fixed-size array type with type-level size constraints.
+--
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE InstanceSigs #-}
+
 module Data.Array (
-  Array,
-  fromVector,
-  fromList,
-  withVec,
-  withList,
-  replicate,
-  singleton,
-  append,
-  split,
-  cons,
-  zipWith,
-  index
+    Array,
+    fromVector,
+    fromList,
+    withVec,
+    withList,
+    replicate,
+    singleton,
+    append,
+    split,
+    cons,
+    zipWith,
+    index
 ) where
 
 import Data.Singletons
@@ -38,8 +46,14 @@ import Prelude hiding (replicate, zipWith)
 import Data.Vector (Vector, (!))
 import qualified Data.Vector as V
 
+-- | An array of a specific size.
+--
+-- An array is a fixed-size collection of elements of the same type.
+-- The size of the array is determined by the type-level natural number n.
+--
+-- To construct an array, use one of 'fromVector', 'fromList', 'withVec', 'withList', 'replicate', or 'singleton'.
 newtype Array (n :: Natural) a where
-  Array :: { toVector :: Vector a } -> Array n a
+    Array :: { toVector :: Vector a } -> Array n a
 
 toList :: Array n a -> [a]
 toList = V.toList . toVector
@@ -64,7 +78,7 @@ fromVector_ sn xs | V.length xs == n = Just (Array xs)
 -- Nothing
 fromVector :: forall n a . SingI n
            => Vector a  -- ^ The input 'Vector'
-           -> Maybe (Array n a)  -- ^ The resulting array of size 'n'
+           -> Maybe (Array n a)  -- ^ The resulting array of size n
 fromVector = fromVector_ (sing :: SNat n)
 
 -- | Convert a list to an array of a specific size.
@@ -72,7 +86,7 @@ fromVector = fromVector_ (sing :: SNat n)
 -- The same as 'fromVector', but takes a list instead of a 'Vector'.
 fromList :: forall n a . SingI n
          => [a]  -- ^ The input list
-         -> Maybe (Array n a)  -- ^ The resulting array of size 'n'
+         -> Maybe (Array n a)  -- ^ The resulting array of size n
 fromList = fromVector . V.fromList
 
 withVec_ :: forall a b . Vector a -> (forall n. Sing n -> Array n a -> b) -> b
@@ -224,33 +238,43 @@ index :: (i < n) ~ True => SNat i -> Array n a -> a
 index i v = toVector v ! fromIntegral (fromSing i)
 
 instance Show a => Show (Array n a) where
-  show = show . toList
+    show :: Show a => Array n a -> String
+    show = show . toList
 
 instance Eq a => Eq (Array n a) where
-  a == b = toVector a == toVector b
+    (==) :: Eq a => Array n a -> Array n a -> Bool
+    a == b = toVector a == toVector b
 
 instance Ord a => Ord (Array n a) where
-  compare a b = compare (toVector a) (toVector b)
+    compare :: Ord a => Array n a -> Array n a -> Ordering
+    compare a b = compare (toVector a) (toVector b)
 
 instance Functor (Array n) where
-  fmap f (Array v) = Array (fmap f v)
+    fmap :: (a -> b) -> Array n a -> Array n b
+    fmap f (Array v) = Array (fmap f v)
 
 instance SingI n => Applicative (Array n) where
-  pure = replicate
-  Array f <*> Array x = Array (V.zipWith ($) f x)
+    pure :: SingI n => a -> Array n a
+    pure = replicate
+    (<*>) :: SingI n => Array n (a -> b) -> Array n a -> Array n b
+    Array f <*> Array x = Array (V.zipWith ($) f x)
 
 instance SingI n => Monad (Array n) where
-  Array v >>= f = Array (V.imap (\i a -> toVector (f a) ! i) v)
+    (>>=) :: SingI n => Array n a -> (a -> Array n b) -> Array n b
+    Array v >>= f = Array (V.imap (\i a -> toVector (f a) ! i) v)
 
 instance Foldable (Array n) where
-  foldMap f (Array v) = foldMap f v
+    foldMap :: Monoid m => (a -> m) -> Array n a -> m
+    foldMap f (Array v) = foldMap f v
 
 instance Traversable (Array n) where
-  traverse f (Array v) = fmap Array (traverse f v)
+    traverse f (Array v) = fmap Array (traverse f v)
 
 instance (Semigroup a, SingI n) => Semigroup (Array n a) where
-  Array a <> Array b = Array (V.zipWith (<>) a b)
+    (<>) :: (Semigroup a, SingI n) => Array n a -> Array n a -> Array n a
+    Array a <> Array b = Array (V.zipWith (<>) a b)
 
 instance (Monoid a, SingI n) => Monoid (Array n a) where
-  mempty = Array (V.replicate l mempty)
-    where l = fromEnum (fromSing (sing :: Sing n))
+    mempty :: (Monoid a, SingI n) => Array n a
+    mempty = Array (V.replicate l mempty)
+      where l = fromEnum (fromSing (sing :: Sing n))
