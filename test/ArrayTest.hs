@@ -8,7 +8,6 @@
 
 module ArrayTest where
 
-import Control.Monad (liftM)
 import Data.Array (withList, Array)
 import qualified Data.Array as A
 import qualified Data.Vector as V
@@ -17,21 +16,6 @@ import GHC.TypeLits
 import Test.Tasty
 import Test.Tasty.QuickCheck as QC
 import Data.Singletons
-import Utils
-
--- newtype WithList a = MkWithList { runWithList :: forall r . ([a] -> r) -> r }
-
--- instance Functor WithList where
---     fmap f (MkWithList g) = MkWithList (\k -> g (k . map f))
-
--- instance Applicative WithList where
---     pure x = MkWithList (\k -> k [x])
---     x <*> y = do a <- x; b <- y; pure (a b)
-
--- instance Monad WithList where
---     return = pure
-    -- MkWithList m >>= f = MkWithList (\)
-
 
 prop_fromList_preservesLength :: [a] -> Property
 prop_fromList_preservesLength xs = withList xs $ \arr 
@@ -71,8 +55,6 @@ prop_semigroup_typeAgrees xs' =
     withList xs' $ \xs -> 
     typeAgrees $ xs <> xs
 
--- KnownNat n, KnownNat m => KnownNat (n + m)
-
 prop_append_typeAgrees :: [a] -> [a] -> Property
 prop_append_typeAgrees xs' ys' =
     withList xs' $ \xs ->
@@ -90,3 +72,24 @@ arrayProps = testGroup
          , QC.testProperty "internal lengths are equal after <>" ( prop_semigroup_typeAgrees )
          , QC.testProperty "internal lengths are equal after append" ( prop_append_typeAgrees @[Int] )
         ]
+
+oneTwoThree :: Array 3 Integer
+oneTwoThree = A.arr3 1 2 3
+
+testIndex :: Integer
+testIndex = index oneTwoThree (Proxy :: Proxy 1)
+
+fourFiveSix :: Array 3 Integer
+fourFiveSix = A.arr3 4 5 6
+
+testAppend :: Num a => Array 6 a
+testAppend = oneTwoThree `append` fourFiveSix
+
+testSplit :: Num a => (Array 2 a, Array 4 a)
+testSplit = split (oneTwoThree `append` fourFiveSix)
+
+arrayUnitTests :: TestTree
+arrayUnitTests = [ QC.testProperty "indexing into an array" $ testIndex === 2
+                   , QC.testProperty "appending two arrays" $ A.toList testAppend === [1,2,3,4,5,6]
+                   , QC.testProperty "splitting an array" $ testSplit === (A.arr2 1 2, A.arr4 3 4 5 6)
+                 ]
