@@ -8,7 +8,7 @@
 
 module MatrixTest where
 
-import qualified Data.Matrix (Matrix)
+import Data.Matrix (Matrix)
 import qualified Data.Matrix as M
 import GHC.TypeLits
 import Test.Tasty

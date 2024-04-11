@@ -8,7 +8,7 @@
 
 module ArrayTest where
 
-import Data.Array (withList, Array)
+import Data.Array (withList, append, split, Array)
 import qualified Data.Array as A
 import qualified Data.Vector as V
 import Data.Maybe
@@ -73,23 +73,24 @@ arrayProps = testGroup
          , QC.testProperty "internal lengths are equal after append" ( prop_append_typeAgrees @[Int] )
         ]
 
-oneTwoThree :: Array 3 Integer
+oneTwoThree :: Array 3 Int
 oneTwoThree = A.arr3 1 2 3
 
-testIndex :: Integer
-testIndex = index oneTwoThree (Proxy :: Proxy 1)
+testIndex :: Int
+testIndex = A.index oneTwoThree (Proxy :: Proxy 1)
 
-fourFiveSix :: Array 3 Integer
+fourFiveSix :: Array 3 Int
 fourFiveSix = A.arr3 4 5 6
 
-testAppend :: Num a => Array 6 a
+testAppend :: Array 6 Int
 testAppend = oneTwoThree `append` fourFiveSix
 
-testSplit :: Num a => (Array 2 a, Array 4 a)
+testSplit :: (Array 2 Int, Array 4 Int)
 testSplit = split (oneTwoThree `append` fourFiveSix)
 
 arrayUnitTests :: TestTree
-arrayUnitTests = [ QC.testProperty "indexing into an array" $ testIndex === 2
+arrayUnitTests = testGroup "(Array unit tests)" 
+                 [   QC.testProperty "indexing into an array" $ testIndex === 2
                    , QC.testProperty "appending two arrays" $ A.toList testAppend === [1,2,3,4,5,6]
                    , QC.testProperty "splitting an array" $ testSplit === (A.arr2 1 2, A.arr4 3 4 5 6)
                  ]

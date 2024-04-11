@@ -22,6 +22,7 @@ module Data.Array (
   replicate,
   Fin,
   empty, singleton,
+  Data.Array.length, internalTypeLength, internalValueLength,
   arr0, arr1, arr2, arr3, arr4, arr5, arr6, arr7, arr8, arr9, arr10, arr11, arr12, arr13, arr14, arr15, arr16, arr17, arr18, arr19, arr20, arr21, arr22, arr23, arr24, arr25, arr26, arr27, arr28, arr29, arr30, arr31, arr32
 ) where
 
