@@ -13,13 +13,7 @@ module Data.Matrix where
 import Data.Array (Array)
 import qualified Data.Array as A
 import Data.List (intercalate)
-import Data.Singletons (
-    Sing,
-    SingI (..),
-    SingKind (fromSing, toSing),
-    SomeSing (SomeSing),
-    withSingI,
- )
+import Data.Singletons
 import Data.Vector (Vector, (!))
 import qualified Data.Vector as V
 import GHC.TypeLits.Singletons
