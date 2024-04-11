@@ -43,6 +43,9 @@ empty = Matrix V.empty
 singleton :: a -> Matrix 1 1 a
 singleton x = Matrix $ V.singleton x
 
+internalLength :: Matrix n m a -> Int
+internalLength (Matrix v) = V.length v
+
 index_ :: (KnownNat i, KnownNat j, (j <= m) ~ True, (i <= n) ~ True) => Sing n -> Sing m -> Matrix n m a -> Proxy i -> Proxy j -> a
 index_ n m (Matrix v) i j = v ! (i' * m' + j')
   where
@@ -176,6 +179,9 @@ withList l = withVec (V.fromList (map V.fromList l))
 
 fromList :: (SingI n, SingI m) => [a] -> Maybe (Matrix n m a)
 fromList = fromVector . V.fromList
+
+toList :: Matrix n m a -> [a]
+toList (Matrix v) = V.toList v
 
 fromArray_ :: Array n a -> Matrix 1 n a
 fromArray_ x = Matrix (A.toVector x)
