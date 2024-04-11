@@ -62,12 +62,10 @@ library
     -- Modules exported by the library.
     exposed-modules:
         Data.Array
-        Data.NdArray
         Data.Matrix
 
     -- Modules included in this library but not exported.
-    other-modules:
-        Data.OldArray
+    -- other-modules:
 
     -- LANGUAGE extensions used by modules in this package.
     other-extensions: DataKinds
