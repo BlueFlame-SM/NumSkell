@@ -74,11 +74,10 @@ library
 
     -- Other library packages from which modules are imported.
     build-depends:
-        base ^>=4.17.2.1,
-        vector,
-        singletons,
-        singletons-base,
-        -- hmatrix
+          base ^>=4.17.2.1
+        , vector
+        , singletons
+        , singletons-base
 
     -- Directories containing source files.
     hs-source-dirs:   src
@@ -110,5 +109,10 @@ test-suite NumSkell-test
 
     -- Test dependencies.
     build-depends:
-        base ^>=4.17.2.1,
-        NumSkell
+          base ^>=4.17.2.1
+        , NumSkell
+        , tasty >= 1.5
+        , tasty-quickcheck == 0.10.3
+        , singletons
+        , singletons-base
+        , vector

@@ -110,8 +110,26 @@ withVec v f = withVec_ v (\s a -> withSingI s (f a))
 withList :: [a] -> (forall n. SingI n => Array n a -> b) -> b
 withList l = withVec (V.fromList l)
 
+internalTypeLength_ :: Sing n -> Array n a -> Int
+internalTypeLength_ x _ = fromEnum $ fromSing x
+
+-- | Gets the length of the array as represented by the type.
+-- | This is an internal function.
+internalTypeLength :: SingI n => Array n a -> Int
+internalTypeLength = internalTypeLength_ sing
+
+-- | Gets the length of the internal vector.
+-- | This is an internal function.
+internalValueLength :: Array n a -> Int
+internalValueLength (Array v) =  V.length v
+
+-- | Gets the length of the array.
+-- | This function is equal to `internalValueLength` and should be equivalent to `internalTypeLength`.
+length :: Array n a -> Int
+length = internalValueLength
+
 instance Functor (Array n) where
-  fmap f (Array v) = Array (fmap f v)
+    fmap f (Array v) = Array (fmap f v)
 
 instance SingI n => Applicative (Array n) where
   pure :: SingI n => a -> Array n a
@@ -123,10 +141,10 @@ instance SingI n => Monad (Array n) where
   Array v >>= f = Array (V.imap (\i a -> toVector (f a) ! i) v)
 
 instance Foldable (Array n) where
-  foldMap f (Array v) = foldMap f v
+    foldMap f (Array v) = foldMap f v
 
 instance Traversable (Array n) where
-  traverse f (Array v) = fmap Array (traverse f v)
+    traverse f (Array v) = fmap Array (traverse f v)
 
 instance (Semigroup a, SingI n) => Semigroup (Array n a) where
   Array a <> Array b = Array (V.zipWith (<>) a b)
