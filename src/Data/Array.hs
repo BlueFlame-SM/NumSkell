@@ -55,6 +55,24 @@ withVec v f = withVec_ v (\s a -> withSingI s (f a))
 withList :: [a] -> (forall n. SingI n => Array n a -> b) -> b
 withList l = withVec (V.fromList l)
 
+internalTypeLength_ :: Sing n -> Array n a -> Int
+internalTypeLength_ x _ = fromEnum $ fromSing x
+
+-- | Gets the length of the array as represented by the type.
+-- | This is an internal function.
+internalTypeLength :: SingI n => Array n a -> Int
+internalTypeLength = internalTypeLength_ sing
+
+-- | Gets the length of the internal vector.
+-- | This is an internal function.
+internalValueLength :: Array n a -> Int
+internalValueLength (Array v) =  V.length v
+
+-- | Gets the length of the array.
+-- | This function is equal to `internalValueLength` and should be equivalent to `internalTypeLength`.
+length :: Array n a -> Int
+length = internalValueLength
+
 instance Functor (Array n) where
     fmap f (Array v) = Array (fmap f v)
 
