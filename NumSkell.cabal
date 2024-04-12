@@ -66,6 +66,7 @@ library
 
     -- Modules included in this library but not exported.
     -- other-modules:
+    --     Data.ArrayGDP
 
     -- LANGUAGE extensions used by modules in this package.
     other-extensions: DataKinds
