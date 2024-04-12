@@ -191,16 +191,6 @@ withVec_ v f =
         case (toSing $ fromIntegral n, toSing $ fromIntegral m) of
             (SomeSing (s :: SNat q), SomeSing (t :: SNat r)) -> f s t (Matrix truncatedV)
 
-{- | Use a list as a $n \times m$ matrix.
-
-Same as 'withVecAsVec', but takes a list instead of a vector.
-
-=== __Examples__:
-
->>> withListAsVec [1, 2, 3] (\mat -> toList (mat + pure 1))
-[2,3,4]
--}
-
 {- | Use a list of lists as a $n \times m$ matrix, where $m$, where $m$ is the
 minimum length of all the nested vectors.
 
