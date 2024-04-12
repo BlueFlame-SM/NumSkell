@@ -11,6 +11,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE InstanceSigs #-}
+{-# LANGUAGE AllowAmbiguousTypes #-}
 
 module Data.Array (
     -- * Array type
@@ -38,16 +39,14 @@ module Data.Array (
     arr23, arr24, arr25, arr26, arr27, arr28, arr29, arr30, arr31, arr32
 ) where
 
-
+import GHC.TypeLits.Singletons ( Natural, SNat )
 import Prelude.Singletons
     ( withSingI,
-      Sing,
       SingI(..),
       SingKind(fromSing, toSing),
       SomeSing(SomeSing),
       POrd(type (<)),
       PNum(type (+)) )
-import GHC.TypeLits.Singletons ( Natural, SNat )
 
 import Prelude hiding (replicate, zipWith, length)
 
@@ -101,9 +100,9 @@ fromList :: forall n a . SingI n
          -> Maybe (Array n a)  -- ^ The resulting array of size n
 fromList = fromVector . V.fromList
 
-withVec_ :: forall a b . Vector a -> (forall n. Sing n -> Array n a -> b) -> b
+withVec_ :: forall a b . Vector a -> (forall n. SNat n -> Array n a -> b) -> b
 withVec_ v f = case toSing $ fromIntegral $ V.length v of
-  SomeSing (s :: Sing m) -> f s (Array v)
+  SomeSing (s :: SNat m) -> f s (Array v)
 
 -- | Applies a function to an array of any size.
 --
@@ -205,7 +204,7 @@ split :: forall n m a . SingI n
       -> (Array n a, Array m a)  -- ^ The resulting arrays
 split = split_ (sing :: SNat n)
 
-split_ :: Sing n -> Array (n + m) a -> (Array n a, Array m a)
+split_ :: SNat n -> Array (n + m) a -> (Array n a, Array m a)
 split_ s v = (Array (V.take l (toVector v)), Array (V.drop l (toVector v)))
   where l = fromEnum (fromSing s)
 
@@ -249,20 +248,28 @@ zipWith f (Array xs) (Array ys) = Array (V.zipWith f xs ys)
 -- | Index into an array using a type-level natural number.
 --
 -- Given an array and a type-level natural number, `index` returns the element at the specified index.
--- Note that the index must be provided at compile time.
+-- This function requires the language extension @TypeApplications@.
 --
 -- === __Example:__
+--
+-- >>> :set -XTypeApplications
 -- >>> let Just arr = fromList [1, 2, 3, 4] :: Maybe (Array 4 Int)
--- >>> index (SNat :: SNat 2) arr
+-- >>> index @2 arr
 -- 3
 --
--- >>> index (SNat :: SNat 5) arr
+-- >>> index @0 arr
+-- 1
+--
+-- >>> index @4 arr
 -- Couldn't match type 'False with 'True arising from a use of `index'
--- In the expression: index (SNat :: SNat 5) arr
--- In an equation for `it_apbE3':
---     it_apbE3 = index (SNat :: SNat 5) arr
-index :: (i < n) ~ True => SNat i -> Array n a -> a
-index i v = toVector v ! fromIntegral (fromSing i)
+-- In the expression: index @4 arr
+-- In an equation for `it_alD55': it_alD55 = index @4 arr
+--
+index :: forall i n a . (SingI i, (i < n) ~ True) => Array n a -> a
+index = index_ (sing :: SNat i)
+
+index_ :: forall i n a . (i < n) ~ True => SNat i -> Array n a -> a
+index_ i (Array v) = v ! fromIntegral (fromSing i)
 
 instance Show a => Show (Array n a) where
     show :: Show a => Array n a -> String
@@ -304,7 +311,7 @@ instance (Semigroup a, SingI n) => Semigroup (Array n a) where
 instance (Monoid a, SingI n) => Monoid (Array n a) where
     mempty :: (Monoid a, SingI n) => Array n a
     mempty = Array (V.replicate l mempty)
-      where l = fromEnum (fromSing (sing :: Sing n))
+      where l = fromEnum (fromSing (sing :: SNat n))
 
 
 -- | Convenience Array constructors

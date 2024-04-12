@@ -265,10 +265,10 @@ reshape (Matrix v) = Matrix v
 -- In the expression: index @2 @0 m
 -- In an equation for `it_ackQu': it_ackQu = index @2 @0 m
 --
-index :: forall i j n m a . (SingI n, SingI m, SingI i, SingI j) => ((i < n) ~ True, (j < m) ~ True) => Matrix n m a -> a
+index :: forall i j n m a . (SingI m, SingI i, SingI j) => ((i < n) ~ True, (j < m) ~ True) => Matrix n m a -> a
 index = index_ (sing :: SNat m) (sing :: SNat i) (sing :: SNat j)
 
-index_ :: forall n i m j a . (SingI n, (i < n) ~ True, (j < m) ~ True) => SNat m -> SNat i -> SNat j -> Matrix n m a -> a
+index_ :: forall n i m j a . ((i < n) ~ True, (j < m) ~ True) => SNat m -> SNat i -> SNat j -> Matrix n m a -> a
 index_ m i j (Matrix v) = v ! fromEnum (fromSing i * fromSing m + fromSing j)
 
 -- | Set the element at the $i$th row and $j$th column of a matrix.
