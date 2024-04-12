@@ -9,13 +9,9 @@ module ArrayTest where
 
 import Data.Array (withList, append, split, Array)
 import qualified Data.Array as A
-import qualified Data.Vector as V
-import Data.Maybe
-import GHC.TypeLits
 import Test.Tasty
 import Test.Tasty.QuickCheck as QC
 import Data.Singletons
-import GHC.TypeLits.Singletons
 
 prop_fromList_preservesLength :: [a] -> Property
 prop_fromList_preservesLength xs =
@@ -44,6 +40,7 @@ prop_withList_typeAgrees :: [a] -> Property
 prop_withList_typeAgrees xs' = withList xs' $ \xs
     -> typeAgrees xs
 
+{-# ANN prop_fmap_typeAgrees "HLint: ignore Functor law" #-}
 prop_fmap_typeAgrees :: [a] -> Property
 prop_fmap_typeAgrees xs' = withList xs' $ \xs
     -> typeAgrees $ fmap id xs
@@ -70,8 +67,8 @@ arrayProps = testGroup
          , QC.testProperty "from a list and then back to a list changes nothing " (prop_fromToList_isId @[Int] )
          , QC.testProperty "internal lengths are equal after withList" (prop_withList_typeAgrees @[Int] )
          , QC.testProperty "internal lengths are equal after fmap" ( prop_fmap_typeAgrees @[Int] )
-         , QC.testProperty "internal lengths are equal after <*>" ( prop_star_typeAgrees )
-         , QC.testProperty "internal lengths are equal after <>" ( prop_semigroup_typeAgrees )
+         , QC.testProperty "internal lengths are equal after <*>" prop_star_typeAgrees
+         , QC.testProperty "internal lengths are equal after <>" prop_semigroup_typeAgrees
          , QC.testProperty "internal lengths are equal after append" ( prop_append_typeAgrees @[Int] )
         ]
 
@@ -79,7 +76,7 @@ oneTwoThree :: Array 3 Int
 oneTwoThree = A.arr3 1 2 3
 
 testIndex :: Int
-testIndex = A.index (sing :: SNat 1) oneTwoThree
+testIndex = A.index @1 oneTwoThree
 
 fourFiveSix :: Array 3 Int
 fourFiveSix = A.arr3 4 5 6

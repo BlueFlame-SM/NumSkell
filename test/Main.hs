@@ -2,14 +2,9 @@
 
 module Main (main) where
 
-import Data.Array
-import Data.Maybe (fromJust)
-import GHC.TypeNats
-
 import ArrayTest (arrayProps, arrayUnitTests)
 import MatrixTest (matrixProps, matrixUnitTests)
-import Test.Tasty (TestTree, defaultMain, localOption, testGroup)
-import Test.Tasty.QuickCheck as QC
+import Test.Tasty (TestTree, defaultMain, testGroup)
 
 main :: IO ()
 main = defaultMain tests

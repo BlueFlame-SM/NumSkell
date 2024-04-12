@@ -1,5 +1,4 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
@@ -10,8 +9,6 @@ module MatrixTest where
 
 import Data.Matrix (Matrix)
 import qualified Data.Matrix as M
-import GHC.TypeLits
-import Data.Maybe
 import Test.Tasty
 import Test.Tasty.QuickCheck as QC
 import Data.Singletons
@@ -20,30 +17,27 @@ import Data.Singletons
 -- Property tests
 -- -----------------
 prop_fromList_preservesLength :: [a] -> Property
-prop_fromList_preservesLength xs' = M.withListAsVec xs' $ \xs -> 
-    M.internalLength xs === length xs'
+prop_fromList_preservesLength xs' = M.withListAsVec xs' $ \xs ->
+    M.size xs === length xs'
 
 prop_toList_preservesLength :: [a] -> Property
-prop_toList_preservesLength xs' = M.withListAsVec xs' $ \xs -> 
+prop_toList_preservesLength xs' = M.withListAsVec xs' $ \xs ->
     length  (M.toList xs) === length xs'
 
 prop_MultByIdMatrix_isId :: [Int] -> Property
-prop_MultByIdMatrix_isId xs' = M.withListAsVec xs' $ \xs -> 
-    M.matrixMult M.idMatrix xs === xs 
+prop_MultByIdMatrix_isId xs' = M.withListAsVec xs' $ \xs ->
+    M.matrixMult M.idMatrix xs === xs
 
-typeAgrees_ :: Sing n -> Sing m -> Matrix n m a -> Property
-typeAgrees_ n m v = fromEnum (fromSing n) * fromEnum (fromSing m) === M.internalLength v
-
-typeAgrees :: forall n m a. (SingI n, SingI m) => Matrix n m a -> Property
-typeAgrees xs = typeAgrees_ (sing :: Sing n) (sing :: Sing m) xs
+typeAgrees :: forall n m a . (SingI n, SingI m) => Matrix n m a -> Property
+typeAgrees xs = M.size xs === length (M.toList xs)
 
 matrixProps :: TestTree
 matrixProps = testGroup
         "(matrixProps)"
-        [ 
+        [
             QC.testProperty "Matrix fromList preserves length" (prop_fromList_preservesLength @Int)
           , QC.testProperty "Matrix toList preserves length" (prop_toList_preservesLength @Int)
-          , QC.testProperty "Square matrix multiplication by identity matrix is identity" (prop_MultByIdMatrix_isId)
+          , QC.testProperty "Square matrix multiplication by identity matrix is identity" prop_MultByIdMatrix_isId
         ]
 
 -- -----------------
