@@ -30,6 +30,8 @@ module Data.Array (
     zipWith,
     index,
     length,
+    toList,
+    toVector,
     -- * Convenience Array constructors
     arr0, arr1, arr2, arr3, arr4, arr5, arr6, arr7, arr8, arr9, arr10, arr11,
     arr12, arr13, arr14, arr15, arr16, arr17, arr18, arr19, arr20, arr21, arr22,
@@ -58,9 +60,13 @@ import qualified Data.Vector as V
 -- The size of the array is determined by the type-level natural number n.
 --
 -- To construct an array, use one of 'fromVector', 'fromList', 'withVec', 'withList', 'replicate', or 'singleton'.
-newtype Array (n :: Natural) a where
-    Array :: { toVector :: Vector a } -> Array n a
+newtype Array (n :: Natural) a
+    = Array {
+        -- | Convert an array to a 'Vector'.
+        toVector :: Vector a
+    }
 
+-- | Convert an array to a list.
 toList :: Array n a -> [a]
 toList = V.toList . toVector
 
